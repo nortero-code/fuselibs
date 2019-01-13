@@ -370,9 +370,13 @@ namespace Fuse
 						}
 						catch (Exception e)
 						{
-							if (_exceptions == null)
+							debug_log "EXCEPTION:";
+							debug_log e.Message;
+							debug_log e.StackTrace;
+							
+							/*if (_exceptions == null)
 								_exceptions = new List<Exception>();
-							_exceptions.Add(e);
+							_exceptions.Add(e);*/
 						}
 					}
 				}
@@ -391,9 +395,13 @@ namespace Fuse
 				}
 				catch (Exception e)
 				{
-					if (_exceptions == null)
+					debug_log "EXCEPTION:";
+					debug_log e.Message;
+					debug_log e.StackTrace;
+				
+					/*if (_exceptions == null)
 						_exceptions = new List<Exception>();
-					_exceptions.Add(e);
+					_exceptions.Add(e);*/
 				}
 			}
 
@@ -417,9 +425,13 @@ namespace Fuse
 				}
 				catch (Exception e)
 				{
-					if (_exceptions == null)
+					debug_log "EXCEPTION:";
+					debug_log e.Message;
+					debug_log e.StackTrace;
+				
+					/*if (_exceptions == null)
 						_exceptions = new List<Exception>();
-					_exceptions.Add(e);
+					_exceptions.Add(e);*/
 				}
 			}
 		}
@@ -477,9 +489,13 @@ namespace Fuse
 					}
 					catch (Exception e)
 					{
-						if (_exceptions == null)
+						debug_log "EXCEPTION:";
+						debug_log e.Message;
+						debug_log e.StackTrace;
+							
+						/*if (_exceptions == null)
 							_exceptions = new List<Exception>();
-						_exceptions.Add(e);
+						_exceptions.Add(e);*/
 					}
 				}
 				a.Clear();
