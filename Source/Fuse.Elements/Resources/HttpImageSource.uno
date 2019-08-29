@@ -181,14 +181,32 @@ namespace Fuse.Resources
 			get { return _orientation; }
 		}
 
+		int numberOfRedirects = 0;
 		void HttpCallback(HttpResponseHeader response, byte[] data)
 		{
+			if (response.StatusCode == 301) {
+				if (numberOfRedirects > 5) {
+					numberOfRedirects = 0;
+					Fail("Failed to load HTTP Image due to too many redirects. ", null);
+					return;
+				}
+				string location;
+				response.Headers.TryGetValue("location", out location);
+				if (location != null){
+					numberOfRedirects += 1;
+					HttpLoader.LoadBinary(location, HttpCallback, LoadFailed);
+				}
+			} else {
+				numberOfRedirects = 0;
+			}
+
 			if (response.StatusCode != 200)
 			{
 				Fail("Loading image from HTTP failed with HTTP Status: " + response.StatusCode + " " +
 					response.ReasonPhrase);
 				return;
 			}
+
 
 			string ct;
 			if (!response.Headers.TryGetValue("content-type",out ct))
@@ -285,6 +303,7 @@ namespace Fuse.Resources
 
 		void LoadFailed( string reason )
 		{
+			numberOfRedirects = 0;
 			Fail("Loading image from '" + Url + "' failed: " + reason);
 		}
 
