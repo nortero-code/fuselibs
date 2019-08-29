@@ -127,8 +127,35 @@ namespace Fuse.Resources
 		}
 	}
 
+	class HttpImageLoadClosure {
+		int _numRedirects;
+		Action<HttpResponseHeader, byte[], int> _done;
+		Action<string> _fail;
+		string _url;
+		internal HttpImageLoadClosure(
+			string url,
+			Action<HttpResponseHeader, byte[], int> done,
+			Action<string> fail,
+			int numRedirects = 0) {
+			_url = url;
+			_numRedirects = numRedirects;
+			_done = done;
+			_fail = fail;
+		}
+
+		void HttpCallback(HttpResponseHeader response, byte[] data) {
+			_done(response, data, _numRedirects);
+		}
+
+		public void run() {
+			HttpLoader.LoadBinary(_url, HttpCallback, _fail);
+		}
+	}
+
 	class HttpImageSourceImpl : LoadingImageSource
 	{
+		static readonly int MAX_REDIRECTS = 5;
+
 		String _url;
 		string _filenameBase;
 		public String Url { get { return _url; } }
@@ -152,7 +179,8 @@ namespace Fuse.Resources
 				}
 				else
 				{
-					HttpLoader.LoadBinary(Url, HttpCallback, LoadFailed);
+					var imageLoadClosure = new HttpImageLoadClosure(Url, HttpCallback, LoadFailed);
+					imageLoadClosure.run();
 				}
 				OnChanged();
 			}
@@ -182,22 +210,19 @@ namespace Fuse.Resources
 		}
 
 		int numberOfRedirects = 0;
-		void HttpCallback(HttpResponseHeader response, byte[] data)
+		void HttpCallback(HttpResponseHeader response, byte[] data, int numRedirects)
 		{
 			if (response.StatusCode == 301) {
 				if (numberOfRedirects > 5) {
-					numberOfRedirects = 0;
 					Fail("Failed to load HTTP Image due to too many redirects. ", null);
 					return;
 				}
 				string location;
 				response.Headers.TryGetValue("location", out location);
-				if (location != null){
-					numberOfRedirects += 1;
-					HttpLoader.LoadBinary(location, HttpCallback, LoadFailed);
+				if (location != null) {
+					var imageLoadClosure = new HttpImageLoadClosure(location, HttpCallback, LoadFailed, numRedirects+1);
+					imageLoadClosure.run();
 				}
-			} else {
-				numberOfRedirects = 0;
 			}
 
 			if (response.StatusCode != 200)
@@ -206,7 +231,6 @@ namespace Fuse.Resources
 					response.ReasonPhrase);
 				return;
 			}
-
 
 			string ct;
 			if (!response.Headers.TryGetValue("content-type",out ct))
